@@ -1,0 +1,31 @@
+{
+  "//1": "describes your app and its dependencies",
+  "//2": "https://docs.npmjs.com/files/package.json",
+  "//3": "updating this file will download and update your packages",
+  "name": "aelz",
+  "version": "1.7.0",
+  "description": "Discord Personal Bot",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
+  },
+  "engines": {
+    "node": "8.x"
+  },
+  "author": "naphzbilly",
+  "license": "MIT",
+  "dependencies": {
+    "canvas": "^2.2.0",
+    "canvas-constructor": "^2.0.1",
+    "discord.js": "^11.4.2",
+    "express": "^4.16.4",
+    "fs-nextra": "^0.3.7",
+    "moment": "^2.22.2",
+    "moment-duration-format": "^2.2.2",
+    "nodemon": "^1.18.7",
+    "parse-ms": "^2.0.0",
+    "sqlite": "^3.0.0",
+    "weather-js": "^2.0.0"
+  }
+}
