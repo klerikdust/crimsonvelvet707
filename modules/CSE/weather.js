@@ -1,7 +1,7 @@
-const Discord = require('discord.js');
-const palette = require('../colorset.json');
-const weather = require('weather-js');
 
+const weather = require('weather-js');
+const palette = require("../../utils/colorset.json");
+const Discord = require('discord.js');
 exports.run = async (bot, message, args) => {
 
 let weatherEmbed = new Discord.RichEmbed();

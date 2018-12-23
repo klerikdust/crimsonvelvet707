@@ -1,7 +1,4 @@
 const Discord = require('discord.js');
-const botconfig = require(`../botconfig.json`);
-const palette = require(`../colorset.json`);
-const package = require(`../package.json`);
 const fs = require('fs');
 const ms = require('parse-ms');
 
@@ -49,9 +46,9 @@ function threeDigits(numbers) {
 
 .addField(`:oil: | **Database**`,
 `\`\`\`json
-» Sqlite  :: ${package.dependencies.sqlite}
-» Size    :: ${fs.statSync('.data/database.sqlite').size} bytes
-» Logs    :: ${await threeDigits(parsedValue)} data were collected.
+//» Sqlite  :: ${package.dependencies.sqlite}
+//» Size    :: ${fs.statSync('.data/database.sqlite').size} bytes
+//» Logs    :: ${await threeDigits(parsedValue)} data were collected.
 \`\`\``)
 
 .addField(`:busts_in_silhouette: | Online Users`,

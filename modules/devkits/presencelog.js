@@ -1,6 +1,5 @@
 const Discord = require('discord.js');
-const config = require("../botconfig.json");
-const palette = require(`../colorset.json`);
+
 
 const sql = require('sqlite');
 sql.open('.data/database.sqlite');

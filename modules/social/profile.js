@@ -3,13 +3,10 @@ const { Canvas } = require("canvas-constructor"); // You can't make images witho
 const { resolve, join } = require("path"); // This is to get a font file.
 const { Attachment } = require("discord.js"); // This is to send the image via discord.
 const { get } = require("snekfetch"); // This is to fetch the user avatar and convert it to a buffer.
-Canvas.registerFont(resolve(join(__dirname, "../Whitney.otf")), "Whitney");
+Canvas.registerFont(resolve(join(__dirname, "../../src/assets/fonts/Whitney.otf")), "Whitney");
 
-const palette = require("../colorset.json");
 const imageUrlRegex = /\?size=2048$/g;
 
-const sql = require("sqlite");
-sql.open(".data/database.sqlite");
 
 module.exports.run = async (bot, message, args) => {
 

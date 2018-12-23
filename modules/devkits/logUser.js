@@ -1,7 +1,4 @@
-const Discord = require("discord.js");
-const botconfig = require('../botconfig.json');
-const palette = require('../colorset.json');
-const moment = require('moment');
+
 
 const sql = require('sqlite');
 sql.open('.data/database.sqlite')
