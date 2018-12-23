@@ -1,4 +1,6 @@
-
+const Discord = require("discord.js");
+const palette = require("../../utils/colorset.json");
+const config = require("../../utils/botconfig");
 
 exports.run = async (bot, message, args) => {
 

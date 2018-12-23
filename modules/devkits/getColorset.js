@@ -1,4 +1,4 @@
-
+const palette = require("../../utils/colorset.json");
 module.exports.run = async (bot, message, args, dynamicMessage) => {
 
 var dynamicMsg = new dynamicMessage();

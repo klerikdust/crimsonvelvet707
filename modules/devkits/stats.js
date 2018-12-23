@@ -1,5 +1,7 @@
 const Discord = require('discord.js');
 const fs = require('fs');
+const palette = require("../../utils/colorset.json");
+const pkg = require("../../package.json");
 const ms = require('parse-ms');
 
 const sql = require("sqlite");
@@ -46,7 +48,7 @@ function threeDigits(numbers) {
 
 .addField(`:oil: | **Database**`,
 `\`\`\`json
-//» Sqlite  :: ${package.dependencies.sqlite}
+//» Sqlite  :: ${pkg.dependencies.sqlite}
 //» Size    :: ${fs.statSync('.data/database.sqlite').size} bytes
 //» Logs    :: ${await threeDigits(parsedValue)} data were collected.
 \`\`\``)

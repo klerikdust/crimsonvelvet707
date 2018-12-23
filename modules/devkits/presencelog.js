@@ -1,3 +1,4 @@
+const palette = require("../../utils/colorset.json");
 const Discord = require('discord.js');
 
 

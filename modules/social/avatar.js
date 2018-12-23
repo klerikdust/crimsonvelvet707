@@ -19,7 +19,6 @@ module.exports.run = async (bot, message, args) => {
 	"Amazing!",
 	"I wuv it ❤.",
 	"Awesome art!",
-	"Meh.",
 	"Magnificent~",
 	"Totally",
 	"I only could give",

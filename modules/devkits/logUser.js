@@ -1,4 +1,6 @@
-
+const moment = require("moment");
+const Discord = require("discord.js");
+const palette = require("../../utils/colorset.json");
 
 const sql = require('sqlite');
 sql.open('.data/database.sqlite')
