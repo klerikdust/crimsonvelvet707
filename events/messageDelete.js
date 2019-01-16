@@ -1,4 +1,4 @@
-	const palette = require('../utils/colorset.json');
+const palette = require('../utils/colorset.json');
 const moment = require('moment');
 const Discord = require('discord.js');
 const sql = require('sqlite');

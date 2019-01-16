@@ -6,7 +6,7 @@ module.exports.run = async (bot, message, args) => {
 	let embed = new Discord.RichEmbed();
 	embed.setColor(palette.darkmatte)
 	const author = message.member;
-	const modRole = message.guild.roles.find(r => r.name === 'Mods');
+	const modRole = message.guild.roles.find(r => r.name === 'Sage');
 
 	if(author.roles.has(modRole.id)) {
 		if(!args[0]) {

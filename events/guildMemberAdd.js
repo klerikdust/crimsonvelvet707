@@ -6,12 +6,12 @@ const moment = require("moment");
 const palette = require("../utils/colorset.json");
 const { Canvas } = require("canvas-constructor"); 
 const { resolve, join } = require("path");
-Canvas.registerFont(resolve(join(__dirname, "./assets/fonts/Whitney.otf")), "Whitney");		  
+Canvas.registerFont(resolve(join(__dirname, "../src/assets/fonts/Whitney.otf")), "Whitney");		  
           module.exports = (bot, member) => {
           const d = Date.now();
 		  const guild = member.guild;
 		  const user = bot.users.get(member.id);
-		  const welcomechnl = guild.channels.find(channel => channel.name === "cafe")
+		  const welcomechnl = guild.channels.find(channel => channel.name === "lobby")
 
           
 
@@ -44,8 +44,8 @@ Canvas.registerFont(resolve(join(__dirname, "./assets/fonts/Whitney.otf")), "Whi
 		        }
 
 		         const { body: avatar } = await get(member.displayAvatarURL.replace(imageUrlRegex, "?size=512"));
-		         const bg = await fsn.readFile('./rawrbg.jpg')
-		         const overlay = await fsn.readFile('./blackoverlay.png');
+		         const bg = await fsn.readFile('../src/assets/rawrbg.jpg')
+		         const overlay = await fsn.readFile('../src/assets/blackoverlay.png');
 
 		          return new Canvas(1000, 320) // x, y
 		      

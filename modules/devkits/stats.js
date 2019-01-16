@@ -10,16 +10,10 @@ sql.open(".data/database.sqlite");
 module.exports.run = async(bot,message,args)=>{
 
 
-function countingIndex() {
-        return sql.all(`SELECT timestamp FROM logdata`)
-        .then(async x => x.length)
-}
-
 function threeDigits(numbers) {
    return numbers.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
 }
 
-    let parsedValue = await countingIndex();
     let bicon = bot.user.displayAvatarURL;
     let members = message.guild.memberCount;
     let botSize = message.guild.members.filter(a=>a.user.bot).size;
@@ -50,7 +44,6 @@ function threeDigits(numbers) {
 `\`\`\`json
 //» Sqlite  :: ${pkg.dependencies.sqlite}
 //» Size    :: ${fs.statSync('.data/database.sqlite').size} bytes
-//» Logs    :: ${await threeDigits(parsedValue)} data were collected.
 \`\`\``)
 
 .addField(`:busts_in_silhouette: | Online Users`,

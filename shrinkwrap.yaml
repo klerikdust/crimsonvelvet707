@@ -1,13 +1,13 @@
 dependencies:
   '@vitalets/google-translate-api': 2.4.0
+  brain.js: 1.6.1
   canvas: 2.2.0
-  canvas-constructor: 2.0.1
+  canvas-constructor: 2.1.1
   discord.js: 11.4.2
   express: 4.16.4
   fs-nextra: 0.3.8
   google: 2.1.0
   google-images: 2.1.0
-  google-translate-api: 2.3.0
   moment: 2.23.0
   moment-duration-format: 2.2.2
   parse-ms: 2.0.0
@@ -43,6 +43,13 @@ packages:
       node: '>= 0.6'
     resolution:
       integrity: sha1-63d99gEXI6OxTopywIBcjoZ0a9I=
+  /acorn/5.7.3:
+    dev: false
+    engines:
+      node: '>=0.4.0'
+    hasBin: true
+    resolution:
+      integrity: sha512-T/zvzYRfbVojPWahDsE5evJdHb3oJoQfFbsrKM7w5Zcs++Tr257tia3BmMP8XYVjp1S9RZXQMh7gao96BlqZOw==
   /ajv/6.6.2:
     dependencies:
       fast-deep-equal: 2.0.1
@@ -145,18 +152,27 @@ packages:
     dev: false
     resolution:
       integrity: sha512-iCuPHDFgrHX7H2vEI/5xpz07zSHB00TpugqhmYtVmMO6518mCuRMoOYFldEBl0g187ufozdaHgWKcYFb61qGiA==
+  /brain.js/1.6.1:
+    dependencies:
+      gpu.js: 1.10.4
+      thaw.js: 2.0.0
+    dev: false
+    resolution:
+      integrity: sha512-c+qrOGoW9VvIohTf70MQCjNzrunXVWI09CT27BZ/lZb6nObGxkdP10c4g9Ztnd8WFJijGdh3veh1A1vk/daIUA==
   /bytes/3.0.0:
     dev: false
     engines:
       node: '>= 0.8'
     resolution:
       integrity: sha1-0ygVQE1olpn4Wk6k+odV3ROpYEg=
-  /canvas-constructor/2.0.1:
+  /canvas-constructor/2.1.1:
     dev: false
+    engines:
+      node: '>=8.6.0'
     peerDependencies:
-      canvas: 'github:Automattic/node-canvas'
+      canvas: '*'
     resolution:
-      integrity: sha512-o+/WeAM5qXSDKlJhDh82DGG7CBm9J2laHeUTrylZFh5gMHzm3UzPu6ZStxlgVeUjRZ7jlHT7JGMnX4I9BrmFZQ==
+      integrity: sha512-FFbLj5bHigNneiTo0UNt9PPRLrJCX0QHwrgJVJmywPaeqYNbBsrRSKtlEK8tL7XTRdz781BhQCDw/NGoVil2Dw==
   /canvas/2.2.0:
     dependencies:
       nan: 2.11.1
@@ -587,22 +603,6 @@ packages:
       node: '>= 4'
     resolution:
       integrity: sha1-EnSuQEgll4Jk06T48tUmuI0L8Cw=
-  /google-translate-api/2.3.0:
-    dependencies:
-      configstore: 2.1.0
-      google-translate-token: 1.0.0
-      got: 6.7.1
-      safe-eval: 0.3.0
-    dev: false
-    resolution:
-      integrity: sha1-YmcwoSPaDVevNzXdcHzacc7pGcc=
-  /google-translate-token/1.0.0:
-    dependencies:
-      configstore: 2.1.0
-      got: 6.7.1
-    dev: false
-    resolution:
-      integrity: sha1-vpQ0RXhvAMN2Xewx9JDawhIo0/g=
   /google/2.1.0:
     dependencies:
       cheerio: 0.19.0
@@ -628,6 +628,12 @@ packages:
       node: '>=4'
     resolution:
       integrity: sha1-JAzQV4WpoY5WHcG0S0HHY+8ejbA=
+  /gpu.js/1.10.4:
+    dependencies:
+      acorn: 5.7.3
+    dev: false
+    resolution:
+      integrity: sha512-qh5O1LXwwkhGOpEicR9SnQB7xduUDY5rKGPWj9yOFLNI90bX+mReooGQjnL3iZ08btBOT0zQGu9wKA+gGy2BhQ==
   /graceful-fs/4.1.15:
     dev: false
     resolution:
@@ -1429,6 +1435,10 @@ packages:
       node: '>=4.5'
     resolution:
       integrity: sha512-LzHF64s5chPQQS0IYBn9IN5h3i98c12bo4NCO7e0sGM2llXQ3p2FGC5sdENN4cTW48O915Sh+x+EXx7XW96xYQ==
+  /thaw.js/2.0.0:
+    dev: false
+    resolution:
+      integrity: sha1-RSvF1+4s4bb5IDewW1BsvWVikdA=
   /timed-out/4.0.1:
     dev: false
     engines:
@@ -1594,14 +1604,14 @@ shrinkwrapMinorVersion: 9
 shrinkwrapVersion: 3
 specifiers:
   '@vitalets/google-translate-api': ^2.4.0
+  brain.js: ^1.6.1
   canvas: ^2.2.0
-  canvas-constructor: ^2.0.1
+  canvas-constructor: ^2.1.0
   discord.js: ^11.4.2
   express: ^4.16.4
   fs-nextra: ^0.3.8
   google: ^2.1.0
   google-images: ^2.1.0
-  google-translate-api: ^2.3.0
   moment: ^2.23.0
   moment-duration-format: ^2.2.2
   parse-ms: ^2.0.0

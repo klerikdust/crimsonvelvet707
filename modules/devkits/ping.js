@@ -1,7 +1,7 @@
 const Discord = require("discord.js");
 const palette = require("../../utils/colorset");
 
-module.exports.run = async (bot, message, args, dynamicMessage) => {
+module.exports.run = async (bot, message, args) => {
 
 	function measuringLatency(ms) {
 		const predict = ['weak', 'Fair', 'stable'];

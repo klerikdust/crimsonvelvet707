@@ -22,7 +22,7 @@ exports.main = async() => {
 		///  COMMAND HANDLER
 		bot.commands = new Discord.Collection();
 
-        const directories = ['CSE', 'devkits', 'mod', 'social'];
+        const directories = ['CSE', 'devkits', 'mod', 'social', 'neuralnet'];
 
         for(let index in directories) {
             fs.readdir(`./modules/${directories[index]}/`, (err, files) => {
