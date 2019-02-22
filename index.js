@@ -1,2 +1,2 @@
-const init = require('./src/aelz.js');
+const init = require(`./src/aelz.js`);
 init.main();

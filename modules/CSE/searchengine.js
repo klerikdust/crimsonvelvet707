@@ -1,41 +1,41 @@
-const Discord = require('discord.js');
-const fs = require('fs');
-const ms = require('parse-ms');
-const google = require('google')
-const palette = require("../../utils/colorset.json");
+const
+	Discord = require(`discord.js`),
+	google = require(`google`),
+	palette = require(`../../utils/colorset.json`);
 
-module.exports.run = async(bot,message,args)=>{
+exports.run = async (bot, message)=>{
+	google.resultsPerPage = 1;
+	let
+		nextCounter = 0,
+		query = message.content.substring(8),
+		embed = new Discord.RichEmbed();
 
-google.resultsPerPage = 1
-var nextCounter = 0
-let query = message.content.substring(8);
-let embed = new Discord.RichEmbed();
-
-message.channel.send(`**${message.author.username}**, I've got best match for "${query}.."`)
-	google(query, function (err, res){
-
-	  try {
-	  		let temp = '';
-			for (var i = 0; i < res.links.length; ++i) {
-		    	var link = res.links[i];
-				    embed.setColor(palette.darkmatte)
-				    temp += `**${link.title} - ${link.href}**\n\u200b\u200b${link.description}\n`;
+	message.channel.send(`**${message.author.username}**, I've got best match for "${query}.."`);
+	google(query, function(err, res) {
+		try {
+			let temp = ``;
+			for (let i = 0; i < res.links.length; ++i) {
+				let link = res.links[i];
+				temp += `**${link.title} - ${link.href}**\n\u200b\u200b${link.description}\n`;
 			}
-			embed.setDescription(temp)
-			 message.channel.send(embed)
-	  }	
-	  catch(e) {
-	  		console.log(e)
-	  		embed.setColor(palette.darkmatte)
-		    embed.setDescription(e)
-	  }
+			embed
+				.setColor(palette.darkmatte)
+				.setDescription(temp);
+			message.channel.send(embed);
+		}
+		catch(e) {
+			console.log(e);
+			embed
+				.setColor(palette.darkmatte)
+				.setDescription(e);
+		}
 
-	if (nextCounter < 4) {
-    	nextCounter += 1
-    if (res.next) res.next()
-  }
-	})
-}
-module.exports.help={
-    name:"search"
-}
+		if (nextCounter < 4) {
+			nextCounter += 1;
+			if (res.next) res.next();
+		}
+	});
+};
+exports.help = {
+	name:`search`,
+};
