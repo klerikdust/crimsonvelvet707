@@ -22,6 +22,7 @@ const
 	Discord = require(`discord.js`),
 	fs = require(`fs`),
 	msgWrapper = require(`../../utils/messageWrapper`),
+	extension = require(`../../utils/extension`),
 	palette = require(`../../utils/colorset.json`),
 	currentNetwork = require(`./trained_network.json`);
 
@@ -29,7 +30,8 @@ module.exports.run = async (bot, message) => {
 	let
 		sqc = 0,
 		listeningState = 1,
-		reply = new msgWrapper(message);
+		reply = new msgWrapper(message),
+		ext = new extension(bot, message);
 
 
 	message.content.includes(`-t`) ? training() : listen();
@@ -52,7 +54,7 @@ module.exports.run = async (bot, message) => {
 			
 			if(!listeningState)return;
 			sqc++;
-			nlu(sqc, fetch, process(msg.content).prop[0]);
+			nlu(sqc, fetch, process(msg.content).prop[0], msg.content);
 
 		});
 	}
@@ -60,26 +62,48 @@ module.exports.run = async (bot, message) => {
 	/**
 	 * 	Processing tokens and find labeled pattern in database.
 	 *  @nlu
+	 *  @param sequence current sequence of active conversation
+	 *  @param callback send parsed output to the user
+	 *  @param input the intent result from neural network
+	 *  @param raw full content of the original input
 	 */
-	function nlu(sequence, callback, input) {
+	function nlu(sequence, callback, input, raw) {
 		db.serialize(() => {
-			db.get(`SELECT * FROM topicflow_models WHERE ${`u` + sequence} = "${input}" LIMIT 1`, (err, row) => {
 
-				if(row === undefined) {
-					listeningState = null;
-					return callback(`Missing sequences. No available conversation beyond this point.`);
-				}
+			/**
+			 * 	Check if the intent has pre-defined function
+			 * 
+			 */
+			
+			if(input.indexOf(`func`) > -1) {
+				listeningState = null;
+				return ext.functionize(raw, input);
+			}
+			else {
+				db.get(`SELECT * FROM topicflow_models WHERE ${`u` + sequence} = "${input}" LIMIT ${Math.round(Math.random() * 5)}`, (err, row) => {
 
-				db.all(`SELECT ${row[`a` + sequence]} FROM template_responses WHERE ${row[`a` + sequence]} IS NOT NULL`, (err, list) => {
-					let res = [];
-					for(let i in list) {
-						let sentence = Object.values(list[i]).toString();
-						sentence.includes(`{name}`) ? sentence = sentence.replace(`{name}`, message.author.username) : null;
-						res.push(sentence);
+
+					/**
+					 * 	Handling error when there's no match dataset.
+					 */
+					if(row === undefined) {
+						listeningState = null;
+						return callback(`I'm sorry? i don't quite know what you meant by that.`);
 					}
-					return callback(res[Math.floor(Math.random () * res.length)]);
+
+					db.all(`SELECT ${row[`a` + sequence]} FROM template_responses WHERE ${row[`a` + sequence]} IS NOT NULL`, (err, list) => {
+						let res = [];
+						for(let i in list) {
+							let sentence = Object.values(list[i]).toString();
+							sentence.includes(`{name}`) ? sentence = sentence.replace(`{name}`, message.author.username) : null;
+							sentence.includes(`{timecode}`) ? sentence = sentence.replace(`{timecode}`, ext.timestate(Date.now())) : null;
+							res.push(sentence);
+						}
+						console.log(`${ext.closest_time(Date.now()).rawtime} | responded to ${message.author.tag} [${row.path}] `);
+						return callback(res[Math.floor(Math.random () * res.length)]);
+					});
 				});
-			});
+			}
 		});
 	}
 
@@ -91,7 +115,7 @@ module.exports.run = async (bot, message) => {
 		let
 			stemmed = sentence
 				.toLowerCase()
-				.replace(/[?!@,.']/g, ``),
+				.replace(/[?!@,.'~-]/g, ``),
 
 			loadNetwork = (file) => {
 				return net
@@ -131,7 +155,7 @@ module.exports.run = async (bot, message) => {
 						return parseFloat(value.toFixed(2)) <= 0.50 ? true : false;
 					},
 					sortres = threesholdLimit(filterValues(data).value[0]) ? filterValues(errhandler) : filterValues(data);
-
+				console.log(`${filterValues(data).value[0]}%`);
 				return {
 					value: sortres.value,
 					prop: sortres.prop,
@@ -155,7 +179,7 @@ module.exports.run = async (bot, message) => {
 			function classifying(datasets) {
 				for (let i in datasets) {
 					trainingData.push({
-						input: { [datasets[i].verb]: 1, [datasets[i].reference]: 0.5 },
+						input: { [datasets[i].verb]: 1, [datasets[i].reference]: 1 },
 						output: { [datasets[i].intent]: 1 },
 					});
 				}
@@ -166,7 +190,7 @@ module.exports.run = async (bot, message) => {
 				net.train(trainingData, {
 					iterations: times,
 					learningRate: 0.1,
-					errorThresh: 0.004,
+					errorThresh: 0.003,
 					logPeriod: 5,
 					log: (stats) => {
 						console.log(

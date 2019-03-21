@@ -1,22 +1,18 @@
 const
 	google = require(`google`),
 	palette = require(`../../utils/colorset.json`),
-	intent = require(`../neuralnet/custom_intents.json`),
 	msgWrapper = require(`../../utils/messageWrapper`);
 
-module.exports.run = async (bot, message) => {
+module.exports.run = async (bot, message, keyword) => {
 
 	let
-		msg = message.content.toLowerCase(),
+		msg = keyword ? keyword.toLowerCase() : message.content.toLowerCase(),
 		reply = new msgWrapper(message),
-		keywords = ``,
+		keywords,
+		
 		keywordParsing = () => {
-			intent.definition.forEach(element => {
-				if(msg.indexOf(element) !== -1) {
-					msg = msg.replace(/[?!@,.]/g, ``);
-					return keywords += `wikipedia ` + msg.slice(msg.indexOf(element));
-				}
-			});
+			msg = msg.replace(/[?!@,.-]/g, ``);
+			return keywords = msg.slice(msg.indexOf(`what is`) + 8);
 		},
 		searching = async () => {
 			google(keywords, async (err, res) => {
