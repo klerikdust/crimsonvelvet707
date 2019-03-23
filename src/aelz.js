@@ -1,15 +1,27 @@
 exports.main = async () => {
-// I wrote this at 10/22/18. To embark on my first programming journey.
+// I wrote this in 10/22/18. To embark on my first programming journey.
 
 	const
 		Discord = require(`discord.js`),
 		credentials = require(`../login.json`),
 		bot = new Discord.Client({ disableEveryone: true }),
-		fs = require(`fs`);
+		fs = require(`fs`),
+		http = require(`http`),
+		express = require(`express`),
+		app = express();
+	
+	app.get(`/`, (request, response) => {
+		console.log(`${bot.ping}ms Ping Received.`);
+		response.sendStatus(200);
+	});
+	app.listen(process.env.PORT);
+	setInterval(() => {
+		http.get(`http://crimsonvelvet707-server.glitch.me/`);
+	}, 280000);
 
 	require(`./eventHandler`)(bot);
 	bot.commands = new Discord.Collection();
-	const directories = [`CSE`, `devkits`, `mod`, `social`, `neuralnet`];
+	const directories = [`CSE`, `devkits`, `social`, `neuralnet`];
 
 	for(const index in directories) {
 		fs.readdir(`./modules/${directories[index]}/`, (err, files) => {

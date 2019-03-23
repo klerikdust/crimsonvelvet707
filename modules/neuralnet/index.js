@@ -30,6 +30,8 @@ module.exports.run = async (bot, message) => {
 	let
 		sqc = 0,
 		listeningState = 1,
+		previousIntent = `starter`,
+		currentPath = `starter`,
 		reply = new msgWrapper(message),
 		ext = new extension(bot, message);
 
@@ -54,7 +56,8 @@ module.exports.run = async (bot, message) => {
 			
 			if(!listeningState)return;
 			sqc++;
-			nlu(sqc, fetch, process(msg.content).prop[0], msg.content);
+			let res = process(msg.content);
+			nlu(sqc, fetch, res.prop[0], res.value[0], msg.author, msg.content);
 
 		});
 	}
@@ -67,43 +70,56 @@ module.exports.run = async (bot, message) => {
 	 *  @param input the intent result from neural network
 	 *  @param raw full content of the original input
 	 */
-	function nlu(sequence, callback, input, raw) {
+	function nlu(sequence, callback, input, confidence, user, raw) {
 		db.serialize(() => {
 
 			/**
-			 * 	Check if the intent has pre-defined function
-			 * 
-			 */
-			
-			if(input.indexOf(`func`) > -1) {
+					 * 
+					 * 	Register new words to unlabeled_dataset if its not trained yet.
+					 * 
+					 */
+			if(confidence <= 0.50) {
+				listeningState = null;
+				db.run(`INSERT INTO unlabeled_dataset (timestamp, from_user, content, current_path, previous_intent) VALUES (${Date.now()}, ${user.id}, "${raw}", "${currentPath}", "${previousIntent}")`);
+				return callback(`Sorry, i can't understand what you meant by that.`);
+			}
+
+			/**
+					 * 	Check if the intent has pre-defined function
+					 * 
+					 */
+					
+			if(input.indexOf(`func`) > -1 && confidence >= 0.50) {
 				listeningState = null;
 				return ext.functionize(raw, input);
 			}
-			else {
-				db.get(`SELECT * FROM topicflow_models WHERE ${`u` + sequence} = "${input}" LIMIT ${Math.round(Math.random() * 5)}`, (err, row) => {
 
+			db.get(`SELECT * FROM topicflow_models WHERE ${`u` + sequence} = "${input}" LIMIT ${Math.round(Math.random() * 5)}`, (err, row) => {
 
-					/**
+				/**
 					 * 	Handling error when there's no match dataset.
 					 */
-					if(row === undefined) {
-						listeningState = null;
-						return callback(`I'm sorry? i don't quite know what you meant by that.`);
-					}
+				if(row === undefined) {
+					listeningState = null;
+					return callback(`I'm sorry? i don't quite know what you meant by that.`);
+				}
 
-					db.all(`SELECT ${row[`a` + sequence]} FROM template_responses WHERE ${row[`a` + sequence]} IS NOT NULL`, (err, list) => {
-						let res = [];
-						for(let i in list) {
-							let sentence = Object.values(list[i]).toString();
-							sentence.includes(`{name}`) ? sentence = sentence.replace(`{name}`, message.author.username) : null;
-							sentence.includes(`{timecode}`) ? sentence = sentence.replace(`{timecode}`, ext.timestate(Date.now())) : null;
-							res.push(sentence);
-						}
-						console.log(`${ext.closest_time(Date.now()).rawtime} | responded to ${message.author.tag} [${row.path}] `);
-						return callback(res[Math.floor(Math.random () * res.length)]);
-					});
+				db.all(`SELECT ${row[`a` + sequence]} FROM template_responses WHERE ${row[`a` + sequence]} IS NOT NULL`, (err, list) => {
+					let res = [];
+					for(let i in list) {
+						let sentence = Object.values(list[i]).toString();
+						sentence.includes(`{name}`) ? sentence = sentence.replace(`{name}`, message.author.username) : null;
+						sentence.includes(`{timecode}`) ? sentence = sentence.replace(`{timecode}`, ext.timestate(Date.now())) : null;
+						sentence.includes(`{emotion}`) ? sentence = sentence.replace(`{emotion}`, ext.emotionstate(row.path)) : null;
+						res.push(sentence.charAt(0).toUpperCase() + sentence.slice(1));
+					}
+					previousIntent = input;
+					currentPath = row.path;
+
+					console.log(`${ext.closest_time(Date.now()).rawtime} | responded to ${message.author.tag} [${row.path}] `);
+					return callback(res[Math.floor(Math.random () * res.length)]);
 				});
-			}
+			});
 		});
 	}
 
@@ -151,14 +167,11 @@ module.exports.run = async (bot, message) => {
 							prop: keys,
 						};
 					},
-					threesholdLimit = (value) => {
-						return parseFloat(value.toFixed(2)) <= 0.50 ? true : false;
-					},
-					sortres = threesholdLimit(filterValues(data).value[0]) ? filterValues(errhandler) : filterValues(data);
-				console.log(`${filterValues(data).value[0]}%`);
+					res = filterValues(data);
+				console.log(`${res.value[0]}% - ${res.prop[0]}`);
 				return {
-					value: sortres.value,
-					prop: sortres.prop,
+					value: res.value,
+					prop: res.prop,
 				};
 			};
 			
@@ -171,15 +184,30 @@ module.exports.run = async (bot, message) => {
 	 */
 	async function training() {
 		let trainingData = [];
+		
 
-		db.all(`SELECT * FROM labeled_dataset`, [], async (err, rows) => {
+		db.all(`SELECT intent, reference FROM labeled_dataset`, [], async (err, rows) => {
 			await classifying(rows);
 			await traindata(20000, `./modules/neuralnet/trained_network.json`);
+			console.log(trainingData);
+
+			function tokenize(sentence) {
+				let splitted_words = sentence
+						.toLowerCase()
+						.replace(/[?!@,.'~-]/g, ``)
+						.split(` `),
+					objectified = {};
+				for(let i = splitted_words.length - 1; i >= 0; i--) {
+					objectified = Object.assign({ [splitted_words[i]]: 1 }, objectified);
+				}
+				return objectified;
+			}
 
 			function classifying(datasets) {
 				for (let i in datasets) {
+					let tokenized_input = tokenize(datasets[i].reference);
 					trainingData.push({
-						input: { [datasets[i].verb]: 1, [datasets[i].reference]: 1 },
+						input: tokenized_input,
 						output: { [datasets[i].intent]: 1 },
 					});
 				}
@@ -191,7 +219,7 @@ module.exports.run = async (bot, message) => {
 					iterations: times,
 					learningRate: 0.1,
 					errorThresh: 0.003,
-					logPeriod: 5,
+					logPeriod: 100,
 					log: (stats) => {
 						console.log(
 							stats

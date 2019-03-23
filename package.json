@@ -8,7 +8,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon -e .js"
+    "start": "node index.js",
+    "beta": "nodemon -e .js"
   },
   "engines": {
     "node": "8.x"

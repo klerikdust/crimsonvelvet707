@@ -35,6 +35,15 @@ class config {
 		return state[res.curstate][res.curtime];
 	}
 
+	emotionstate(path) {
+		let state = {
+			"happy": [`:)`, `c:`, `:>`],
+			"sad": [`:(`, `:c`, `:<`],  
+		};
+		path = path.replace(/[0-9]/g, ``);
+		return state[path][Math.round(Math.random () * 3)];
+	}
+
 	functionize(entity, intent) {
 		const direct = {
 			"search_func": `_automatedsearch`,
