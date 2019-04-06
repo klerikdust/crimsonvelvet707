@@ -12,7 +12,7 @@ module.exports.run = async (bot, message, keyword) => {
 		
 		keywordParsing = () => {
 			msg = msg.replace(/[?!@,.-]/g, ``);
-			return keywords = msg.slice(msg.indexOf(`what is`) + 8);
+			return keywords = msg.slice(msg.indexOf(`what is`) + 8) + ` wikipedia`;
 		},
 		searching = async () => {
 			google(keywords, async (err, res) => {
@@ -27,7 +27,7 @@ module.exports.run = async (bot, message, keyword) => {
 					};
 
 					await scrappingLinks();
-					reply.response(`**${link.title}**\n\u200b\u200b${link.description}\n`, palette.crimson);
+					reply.response(`${link.description}\n`, palette.crimson);
 				}
 				catch(e) {
 					console.log(e);

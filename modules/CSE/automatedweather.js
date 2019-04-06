@@ -1,13 +1,15 @@
 const
 	weather = require(`weather-js`),
+	nlp = require(`compromise`),
 	palette = require(`../../utils/colorset.json`),
-	messageWrapper = require(`../../utils/messageWrapper`);
+	messageWrapper = require(`../../utils/messageWrapper`),
+	sqlite3 = require(`sqlite3`).verbose(),
+	db = new sqlite3.Database(`.data/aelz - Copy.db`, sqlite3.OPEN_READWRITE);
 
 exports.run = async (bot, message, keyword) => {
 
 	let
-        msg = keyword ? keyword.toLowerCase() : message.content.toLowerCase(),
-        keywords,
+		msg = keyword ? keyword.toLowerCase() : message.content.toLowerCase(),
 		skycodeCheck = (code) => {
 			const
 				clearArr = [0, 1, 2, 3, 4, 17, 35, 32],
@@ -58,30 +60,56 @@ exports.run = async (bot, message, keyword) => {
 			// partly cloudy
 			}
 		},
-		keywordParsing = () => {
-			msg = msg.replace(/[?!@,.-]/g, ``);
-			return keywords = msg.slice(msg.indexOf(`in`) + 3);
+		keywordParsing = (callback) => {
+			db.all(`SELECT word, tag FROM entities_addon`, async (err, res) => {
+				msg = msg
+					.toLowerCase()
+					.replace(/[?!@,.-]/g, ``);
+
+				const cities_addon = () => {
+					let word_tag = {};
+					for(let row = 0; res.length > row; row++) {
+						word_tag[res[row].word] = res[row].tag;
+					}
+					word_tag = Object.assign({ words: word_tag });
+					return word_tag;
+				};
+
+				nlp.plugin(cities_addon());
+				msg = nlp(msg).nouns().out(`tags`);
+
+				const city_tags = () => {
+					for(let k = 0; msg.length > k; k++) {
+						let 
+							obj = Object.values(msg[k]),
+							tags_array = obj[2];
+						if(tags_array.includes(`City`)) {
+							return obj[0];
+						}
+					}
+				};
+				return callback(city_tags());
+			});
 		},
-		lookup = () => {
-			weather.find({ search: keywords, degreeType: `C` }, function(err, result) {
+		lookup = (key) => {
+			const reply = new messageWrapper(message);
+			weather.find({ search: key, degreeType: `C` }, function(err, result) {
+
+				if(err) return reply.response(`Sorry, i can't find any forecast for that place.`);
+				if(result === undefined) return reply.response(`Could you please specify valid location?`);
+
 				let
-					reply = new messageWrapper(message),
 					location = result[0].location,
 					current = result[0].current;
 
-				if(result === undefined)return reply.response(`Could you please specify valid location?`);
-
-				return reply.response(`
-      Today in **${location.name}** is ${current.skytext}. ${skycodeCheck(parseInt(current.skycode))}
-      Temp: **${current.temperature}°C** | Humidity: **${current.humidity}** | Wind: **${current.windspeed}**`,
+				console.log(`${message.author.tag} look up for weather in ${key}.`);
+				return reply.multi_response(`Sure, here the forecast.`, `Today in **${location.name}** is ${current.skytext}. ${skycodeCheck(parseInt(current.skycode))}
+				Temp: **${current.temperature}°C** | Humidity: **${current.humidity}** | Wind: **${current.windspeed}**`,
 				palette.crimson);
 			});
 		};
     
-	await keywordParsing();
-    await lookup();
-    console.log(keyword);
-	return console.log(`${message.author.tag} look up for weather in ${keywords}.`);
+	return keywordParsing(lookup);
 };
 
 

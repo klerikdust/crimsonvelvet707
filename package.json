@@ -19,6 +19,7 @@
   "dependencies": {
     "@vitalets/google-translate-api": "^2.4.0",
     "brain.js": "^1.6.1",
+    "compromise": "^11.13.2",
     "discord.js": "^11.4.2",
     "express": "^4.16.4",
     "fs-nextra": "^0.3.8",

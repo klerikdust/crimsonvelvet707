@@ -16,8 +16,9 @@
  */
 const
 	brain = require(`brain.js`),
+	nlp = require(`compromise`),
 	sqlite3 = require(`sqlite3`).verbose(),
-	net = new brain.NeuralNetwork({ hiddenLayers: [3] }),
+	net = new brain.NeuralNetwork({ hiddenLayers: [4] }),
 	db = new sqlite3.Database(`.data/aelz.db`, sqlite3.OPEN_READWRITE),
 	Discord = require(`discord.js`),
 	fs = require(`fs`),
@@ -26,7 +27,7 @@ const
 	palette = require(`../../utils/colorset.json`),
 	currentNetwork = require(`./trained_network.json`);
 
-module.exports.run = async (bot, message) => {
+module.exports.run = async (bot, opt, message) => {
 	let
 		sqc = 0,
 		listeningState = 1,
@@ -35,30 +36,36 @@ module.exports.run = async (bot, message) => {
 		reply = new msgWrapper(message),
 		ext = new extension(bot, message);
 
-
-	message.content.includes(`-t`) ? training() : listen();
-
-	/**
-	 * Send processed words to the user.
-	 *  @fetch
-	 */
-	const fetch = (data) => reply.response(data, palette.crimson);
+	opt === `startup` ? training() : listen();
 
 	/**
 	 * 	Message listener
-	 * 	capturing all user input within 60 seconds.
+	 * 	capturing all user input within 3 minutes.
 	 * 	@listen
 	 */
 	function listen() {
-		const collector = new Discord.MessageCollector(message.channel, m => m.author.id === message.author.id, { time: 60000 });
-		reply.response(`Hello **${message.author.username}**, may i help you?`);
-		collector.on(`collect`, async (msg) => {
-			
-			if(!listeningState)return;
+		const collector = new Discord.MessageCollector(message.channel,
+			m => m.author.id === message.author.id, {
+				max: 25,
+				time: 180000,
+			});
+
+		const fetch = (data) => reply.response(data, palette.crimson);
+		const listenerEvent = (msg) => {
 			sqc++;
 			let res = process(msg.content);
 			nlu(sqc, fetch, res.prop[0], res.value[0], msg.author, msg.content);
+		};
 
+		
+		opt === `directcall` ? listenerEvent(message) : reply.response(`Hello **${message.author.username}**, may i help you?`);
+		collector.on(`collect`, async (msg) => {
+			if(!listeningState)return collector.stop();
+			listenerEvent(msg);
+		});
+		collector.on(`end`, async () => {
+			listeningState = null;
+			console.log(`Listening state ended`);
 		});
 	}
 
@@ -73,22 +80,44 @@ module.exports.run = async (bot, message) => {
 	function nlu(sequence, callback, input, confidence, user, raw) {
 		db.serialize(() => {
 
-			/**
-					 * 
-					 * 	Register new words to unlabeled_dataset if its not trained yet.
-					 * 
-					 */
-			if(confidence <= 0.50) {
-				listeningState = null;
-				db.run(`INSERT INTO unlabeled_dataset (timestamp, from_user, content, current_path, previous_intent) VALUES (${Date.now()}, ${user.id}, "${raw}", "${currentPath}", "${previousIntent}")`);
-				return callback(`Sorry, i can't understand what you meant by that.`);
-			}
+			let stemmed = raw
+				.toLowerCase()
+				.replace(/[?!@,./'~-]/g, ``);
+			// let extracted_entities = nlp(stemmed).nouns().out(`tags`);
+			
+			// console.log(extracted_entities[extracted_entities.length - 1]);
 
 			/**
-					 * 	Check if the intent has pre-defined function
-					 * 
-					 */
-					
+			 * 	Ignore if message length is less than 2 characters.
+			 */
+			if(raw.length <= 1)return listeningState = null;
+
+							
+			db.get(`SELECT EXISTS(SELECT reference FROM labeled_dataset WHERE reference = "${stemmed}")`, (err, data) => {
+				/**
+				 *  Check if the input isn't in dataset yet with confidence above atleast 70%.
+				 *  Register new row of labeled data.
+				 *  @selflabeling
+				 */
+				if(Object.values(data) < 1 && confidence >= 0.70) {
+					db.run(`INSERT INTO labeled_dataset (intent, reference, gathered_at) VALUES ("${input}", "${stemmed}", ${Date.now()})`);
+				}
+				/**
+				  *  Require human-labeling if the confidence threeshold below 50%.
+				  *  @batchlabeling
+				  */
+				if(confidence < 0.50) {
+					listeningState = null;
+					db.run(`INSERT INTO unlabeled_dataset (timestamp, from_user, content, current_path, previous_intent) VALUES (${Date.now()}, ${user.id}, "${raw}", "${currentPath}", "${previousIntent}")`);
+					return callback(`Thanks for the information **${user.username}**, I'll study about it next time!`);
+				}
+			});
+
+
+			/**
+			  * Check if the intent has pre-defined function
+		      * 
+			  */
 			if(input.indexOf(`func`) > -1 && confidence >= 0.50) {
 				listeningState = null;
 				return ext.functionize(raw, input);
@@ -96,14 +125,20 @@ module.exports.run = async (bot, message) => {
 
 			db.get(`SELECT * FROM topicflow_models WHERE ${`u` + sequence} = "${input}" LIMIT ${Math.round(Math.random() * 5)}`, (err, row) => {
 
+
 				/**
-					 * 	Handling error when there's no match dataset.
-					 */
+				* 	Handling error when there's no match in topicflow_models.
+				*/
 				if(row === undefined) {
 					listeningState = null;
-					return callback(`I'm sorry? i don't quite know what you meant by that.`);
+					return callback(`Sorry, i don't know how to react beyond this point.`);
 				}
+					
 
+				/**
+				 * 	Processing the string from database.
+				 * 
+				 */
 				db.all(`SELECT ${row[`a` + sequence]} FROM template_responses WHERE ${row[`a` + sequence]} IS NOT NULL`, (err, list) => {
 					let res = [];
 					for(let i in list) {
@@ -115,6 +150,7 @@ module.exports.run = async (bot, message) => {
 					}
 					previousIntent = input;
 					currentPath = row.path;
+
 
 					console.log(`${ext.closest_time(Date.now()).rawtime} | responded to ${message.author.tag} [${row.path}] `);
 					return callback(res[Math.floor(Math.random () * res.length)]);
@@ -131,7 +167,7 @@ module.exports.run = async (bot, message) => {
 		let
 			stemmed = sentence
 				.toLowerCase()
-				.replace(/[?!@,.'~-]/g, ``),
+				.replace(/[?!@,./'~-]/g, ``),
 
 			loadNetwork = (file) => {
 				return net
@@ -186,10 +222,9 @@ module.exports.run = async (bot, message) => {
 		let trainingData = [];
 		
 
-		db.all(`SELECT intent, reference FROM labeled_dataset`, [], async (err, rows) => {
+		db.all(`SELECT * FROM labeled_dataset`, [], async (err, rows) => {
 			await classifying(rows);
 			await traindata(20000, `./modules/neuralnet/trained_network.json`);
-			console.log(trainingData);
 
 			function tokenize(sentence) {
 				let splitted_words = sentence
@@ -213,12 +248,12 @@ module.exports.run = async (bot, message) => {
 				}
 			}
 
-
 			function traindata(times, path) {
 				net.train(trainingData, {
 					iterations: times,
+					timeout: Infinity,
 					learningRate: 0.1,
-					errorThresh: 0.003,
+					errorThresh: 0.002,
 					logPeriod: 100,
 					log: (stats) => {
 						console.log(
@@ -230,7 +265,7 @@ module.exports.run = async (bot, message) => {
 				let parsednetwork = net.toJSON();
 
 				fs.writeFile(path, JSON.stringify(parsednetwork, null, 4), (err) => {
-					err ? console.log(err) : reply.response(`Training finished. New network has been stored in ${path}`);
+					err ? console.log(err) : console.log(`Neural network has been refreshed and stored in ${path}`);
 				});
 			}
 		});

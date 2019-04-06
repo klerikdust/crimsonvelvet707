@@ -11,7 +11,9 @@ module.exports = async (bot, message) => {
 			args = messageArray.slice(1);
 
 		if(message.isMentioned(bot.user.id)) {
-			return mc.length <= 21 ? bot.commands.get(`nlp`).run(bot, message) : null;
+			return mc.length <= 21 
+				? bot.commands.get(`nlp`).run(bot, null, message) 
+				: bot.commands.get(`nlp`).run(bot, `directcall`, message);
 		}
 		if(mc.startsWith(prefix)) {
 			let cmdfile = bot.commands.get(cmd.slice(prefix.length));
